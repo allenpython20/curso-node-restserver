@@ -34,12 +34,12 @@ const usuariosPut = async(req,res)=>{
 
     if(password){
         const salt = bcryptjs.genSaltSync();
-        resto.password = bcryptjs.hashSync(password)
+        resto.password = bcryptjs.hashSync(password,salt)
     }
 
     const usuario = await Usuario.findByIdAndUpdate(id,resto)
 
-    res.status(500).json({
+    res.status(200).json({
         msg:'put ',
         id
     })
@@ -69,11 +69,14 @@ const usuariosDelete = async(req,res)=>{
 
     const {id} = req.params;
 
+    const uid = req.uid; //es el mismo req que se modifico en validar-jwt.js
+
     // const usuario = await Usuario.findByIdAndDelete(id);
 
     const usuario = await Usuario.findByIdAndUpdate(id,{estado:false});
+    const usuarioAuth = req.usuario;
 
-    res.json(usuario)
+    res.json({usuario,usuarioAuth})
 
 
    
