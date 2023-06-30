@@ -2,6 +2,8 @@ const {response,request} = require('express');
 const Usuario = require('../models/usuario');
 const bcryptjs = require('bcryptjs');
 const { generarJWT } = require('../helpers/generar-jwt');
+const { googleVerify } = require('../helpers/google-verify');
+
 
 const login = async(req,res= response) => {
 
@@ -50,6 +52,53 @@ const login = async(req,res= response) => {
     
 }
 
+const googleSignIn = async(req,res) => {
+    const {id_token} = req.body;
+  
+    try {
+        const {correo,nombre,img} = await googleVerify(id_token);
+
+        let user = await Usuario.findOne({correo});
+
+        if(!user){
+            const data = {
+                nombre,
+                correo,
+                password : 1,
+                img,
+                rol:'USER_ROLE',
+                google:true
+            }
+
+            user = new Usuario(data);
+            await user.save();
+        }
+
+        //si esta en db
+        if(!user.estado){
+            return res.json({
+                msg:'No autorizado'
+            })
+        }
+
+        //generar el jwt
+        const token = await generarJWT(user.id);
+
+        res.json({
+            user,
+            token
+        })
+  
+   
+    } catch (error) {
+        res.json({
+            error
+        })
+    }
+
+}
+
 module.exports = {
-    login
+    login,
+    googleSignIn
 }
